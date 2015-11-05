@@ -92,6 +92,8 @@ Mat mediaBlur(Mat &channel){
 
                 }
             }
+            media = sum/SQUARE_AREA;
+            channel.at<uchar>(i,j) = media;
         }
     }
     return channel;
