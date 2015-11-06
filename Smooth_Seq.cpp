@@ -69,7 +69,7 @@ int main( int argc, char** argv) {
     merge(rgb, finImg);
 
     //if( display_finImg( DELAY_CAPTION,window_name,finImg) != 0 ) { return 0; }
-    imwrite( "/grupo27b/sequencial/Trab2Concorrente/novaImg.png", finImg );
+	imwrite("novaImg.jpg", finImg);
     //waitKey(0);
 
     return 0;
