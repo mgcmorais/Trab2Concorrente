@@ -33,7 +33,7 @@ int main( int argc, char** argv) {
     /// grayScale image section
     if( *imgType == 0) {
         finImg = src.clone();
-        copyMakeBorder(finImg,finImg,top,bottom,lef,right,boderType, value);
+        copyMakeBorder(finImg,finImg,top,bottom,left,right,boderType, value);
         finImg = mediaBlur(finImg);
         finImg = finImg.colRange(3, (finImg.cols-3));
         finImg = finImg.rowRange(3, (finImg.rows-3));
