@@ -27,50 +27,48 @@ int main( int argc, char** argv) {
     Scalar value( 0, 0, 0);
 
     /// Load the source image
-    int *imgType = (int*)argv[2];
-    src = imread( argv[1], *imgType );
+    int imgType = atoi(argv[2]);
+    src = imread( argv[1], imgType );
 
     /// grayScale image section
-    if( *imgType == 0) {
+    if( imgType == 0) {
         finImg = src.clone();
         copyMakeBorder(finImg,finImg,top,bottom,left,right,borderType, value);
         finImg = mediaBlur(finImg);
         finImg = finImg.colRange(3, (finImg.cols-3));
         finImg = finImg.rowRange(3, (finImg.rows-3));
-        if( display_finImg( DELAY_CAPTION,window_name,finImg) != 0 ) { return 0; }
-        waitKey(0);
-        return 0;
-    }
-
-    /// Split the image in channels
-    split(src,dst);
-
-    /// Apply medianBlur in each channel
-    for(int i=0;i<3;++i){
-
-        //insere a borda de tamanhos especificados
-        copyMakeBorder( dst[i], dst[i], top, bottom, left, right, borderType, value );
-        dst[i] = mediaBlur(dst[i]);
-
-        //as duas linhas abaixo devolvem a matriz sem as bordas.
-        dst[i] = dst[i].colRange(3, (dst[i].cols-3));
-        dst[i] = dst[i].rowRange(3, (dst[i].rows-3));
-    }
-
-
-    /// Push the channels into the Mat vector
-    vector<Mat> rgb;
-    rgb.push_back(dst[0]); //blue
-    rgb.push_back(dst[1]); //green
-    rgb.push_back(dst[2]); //red
-
-
-    /// Merge the three channels
-    merge(rgb, finImg);
-
-    //if( display_finImg( DELAY_CAPTION,window_name,finImg) != 0 ) { return 0; }
 	imwrite("novaImg.jpg", finImg);
-    //waitKey(0);
+    }else{
+
+	    /// Split the image in channels
+	    split(src,dst);
+
+	    /// Apply medianBlur in each channel
+	    for(int i=0;i<3;++i){
+
+		//insere a borda de tamanhos especificados
+		copyMakeBorder( dst[i], dst[i], top, bottom, left, right, borderType, value );
+		dst[i] = mediaBlur(dst[i]);
+
+		//as duas linhas abaixo devolvem a matriz sem as bordas.
+		dst[i] = dst[i].colRange(3, (dst[i].cols-3));
+		dst[i] = dst[i].rowRange(3, (dst[i].rows-3));
+	    }
+
+
+	    /// Push the channels into the Mat vector
+	    vector<Mat> rgb;
+	    rgb.push_back(dst[0]); //blue
+	    rgb.push_back(dst[1]); //green
+	    rgb.push_back(dst[2]); //red
+
+
+	    /// Merge the three channels
+	    merge(rgb, finImg);
+
+	    imwrite("novaImg.jpg", finImg);
+
+    }
 
     return 0;
 }
