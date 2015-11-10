@@ -15,8 +15,9 @@ using namespace cv;
 //o processador é um quad core
 #define NUMTHREADS 4
 
-Mat src, dst[3], finImg;
+Mat src, dst[3], dst2[3], finImg;
 
+void mediaBlurRGB(int inicio, int fim, int indice);
 void mediaBlur(int inicio, int fim);
 int display_finImg(int delay, String&, Mat&);
 
@@ -31,8 +32,9 @@ int main( int argc, char** argv) {
     Scalar value( 0, 0, 0);
 
     /// Load the source image
-    int *imgType = (int*)argv[2];
-    src = imread( argv[1], *imgType );
+    int imgType = atoi(argv[2]);
+    src = imread( argv[1], imgType );
+
     copyMakeBorder(src,src, top, bottom,left, right, borderType, value);
     finImg = src.clone();
     
@@ -43,7 +45,8 @@ int main( int argc, char** argv) {
     resto = tamLin%NUMTHREADS;
 
     /// grayScale image section
-    if( *imgType == 0) {
+    if( imgType == 0) {
+
 	//percorrer o loop para cada bloco da imagem definida.
 	#pragma omp parallel for
 	for(int i=0; i < NUMTHREADS; ++i){
@@ -57,51 +60,72 @@ int main( int argc, char** argv) {
         finImg = finImg.rowRange(3, (finImg.rows-3));
         if( display_finImg( DELAY_CAPTION,window_name,finImg) != 0 ) { return 0; }
         waitKey(0);
-        return 0;
+    } else {
+
+	    /// Split the image in channels
+	    split(src,dst);
+	    split(src, dst2);
+
+	    /// Apply medianBlur in each channel
+	    for(int j=0;j<3;++j){
+
+		//insere a borda de tamanhos especificados
+		copyMakeBorder( dst[j], dst[j], top, bottom, left, right, borderType, value );
+		
+		//percorrer o loop para cada bloco da imagem definida.
+		#pragma omp parallel for
+		for(int i=0; i < NUMTHREADS; ++i){
+		   if(i == NUMTHREADS-1)
+		      mediaBlurRGB(bloco*i, ((bloco*(i+1)) - 1), j);
+		   else
+		      mediaBlurRGB((bloco)*i, ((bloco*(i+1)) - 1 + resto), j);
+		}
+
+		//as duas linhas abaixo devolvem a matriz sem as bordas.
+		dst[j] = dst[j].colRange(3, (dst[j].cols-3));
+		dst[j] = dst[j].rowRange(3, (dst[j].rows-3));
+	    }
+
+
+	    /// Push the channels into the Mat vector
+	    vector<Mat> rgb;
+	    rgb.push_back(dst[0]); //blue
+	    rgb.push_back(dst[1]); //green
+	    rgb.push_back(dst[2]); //red
+
+
+	/// Merge the three channels
+	merge(rgb, finImg);
+   	if( display_finImg( DELAY_CAPTION,window_name,finImg) != 0 ) { return 0; }
+    	waitKey(0);
     }
 
-    /// Split the image in channels
-    split(src,dst);
-
-    /// Apply medianBlur in each channel
-    for(int j=0;j<3;++j){
-
-        //insere a borda de tamanhos especificados
-        copyMakeBorder( dst[j], dst[j], top, bottom, left, right, borderType, value );
-        
-        //percorrer o loop para cada bloco da imagem definida.
-	#pragma omp parallel for
-	for(int i=0; i < NUMTHREADS; ++i){
-	   if(i == NUMTHREADS-1)
-	      mediaBlur(bloco*i, (bloco*(i+1)) - 1);
-	   else
-	      mediaBlur((bloco)*i, (bloco*(i+1)) - 1 + resto);
-	}
-
-	dst[j] = finImg;
-        //as duas linhas abaixo devolvem a matriz sem as bordas.
-        dst[j] = dst[j].colRange(3, (dst[j].cols-3));
-        dst[j] = dst[j].rowRange(3, (dst[j].rows-3));
-    }
-
-
-    /// Push the channels into the Mat vector
-    vector<Mat> rgb;
-    rgb.push_back(dst[0]); //blue
-    rgb.push_back(dst[1]); //green
-    rgb.push_back(dst[2]); //red
-
-
-    /// Merge the three channels
-    merge(rgb, finImg);
-
-    if( display_finImg( DELAY_CAPTION,window_name,finImg) != 0 ) { return 0; }
-
-    waitKey(0);
 
     return 0;
 }
 
+
+void mediaBlurRGB(int inicio, int fim, int indice){
+
+    int colSize = finImg.cols, sum;
+    double media;
+
+    for(int i = inicio+2; i < (fim-2); ++i){
+
+        for(int j = 2; j < (colSize-2); ++j){
+            sum=0;
+            for( int l = i - 2; l <= i + 2; l++) {
+
+                for( int c = j - 2; c <= j + 2; c++) {
+                    sum += dst2[indice].at<uchar>(l,c);
+
+                }
+            }
+	media = sum/SQUARE_AREA;
+        dst[indice].at<uchar>(i,j) = media;
+        }
+    }
+}
 
 void mediaBlur(int inicio, int fim){
 
