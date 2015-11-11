@@ -22,6 +22,7 @@ int main( int argc, char** argv) {
     int DELAY_CAPTION = 1500, top = 2, bottom = 2, left = 2, right = 2, borderType = BORDER_CONSTANT;
     String window_name = "Smoothing ";
     Mat src, dst[3], finImg;
+    clock_t itime, ftime;
 
     ///Values that will be inserted in image border( solves border pixels problem )
     Scalar value( 0, 0, 0);
@@ -30,6 +31,7 @@ int main( int argc, char** argv) {
     int imgType = atoi(argv[2]);
     src = imread( argv[1], imgType );
 
+    itime = clock();
     /// grayScale image section
     if( imgType == 0) {
         finImg = src.clone();
@@ -42,14 +44,13 @@ int main( int argc, char** argv) {
 
 	    /// Split the image in channels
 	    split(src,dst);
-
+	    
 	    /// Apply medianBlur in each channel
 	    for(int i=0;i<3;++i){
 
 		//insere a borda de tamanhos especificados
 		copyMakeBorder( dst[i], dst[i], top, bottom, left, right, borderType, value );
 		dst[i] = mediaBlur(dst[i]);
-
 		//as duas linhas abaixo devolvem a matriz sem as bordas.
 		dst[i] = dst[i].colRange(3, (dst[i].cols-3));
 		dst[i] = dst[i].rowRange(3, (dst[i].rows-3));
@@ -69,7 +70,11 @@ int main( int argc, char** argv) {
 	    imwrite("novaImg.jpg", finImg);
 
     }
-
+    
+    ftime = clock();
+    tempo = (ftime-itime) / (CLOCKS_PER_SEC * 1.0);
+    printf("\nTempo : %lf\n",tempo);
+    
     return 0;
 }
 
